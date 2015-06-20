@@ -1,0 +1,154 @@
+---
+title: "Weight Lifting Data Report"
+author: "Xiaowen Wang"
+date: "June 17, 2015"
+output: html_document
+---
+
+# Preview
+This report is about machine learning based HAR(Human Activity Recongnition) classifier. In this report, we want to investigate "how (well)" an activity was performed by the wearer. By studying the training data, we are trying to find a model fitted with supervised machine learning to predict future activities.
+
+# Experiment Conduction and Data Collection 
+
+### Experiment Design
+Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E). Class A corresponds to the specified execution of the exercise, while the other 4 classes correspond to common mistakes.  
+
+### Data Collection
+The sensor used has 9 degrees of freedom Razor inertial measurement units (IMU), which provide three-axes acceleration, gyroscope and magnetometer data at a  joint sampling rate of 45 Hz.The sensors are placed in 4 places: they are glove, armband, lumbar belt anddumbbell.   
+
+# Load Data and Exploratory Analysis
+After load the data, we did some visualization to explore the data. The points are seriouly overlapping. And dumbbell rotation data is very interesting(Figure1). As the predictor is not time concerned, we want to delete the aggregated data, and time data to get tidy data, labeled as sample1.   
+```{r,results=FALSE}
+sample <- read.csv("pml-training.csv")
+validation <- read.csv("pml-testing.csv")
+library(caret)
+library(adabag)
+library(plyr)
+featurePlot(x=sample[,84:86],y=sample$classe,plot = "pairs",
+            auto.key = list(columns = 5),main="Dumbbell Rotation",xlab="Figure 1")
+roll <- grep("^roll",names(sample))
+pitch <- grep("^pitch",names(sample))
+yaw <- grep("^yaw",names(sample))
+sensor <- grep("[xyz]$",names(sample))
+sample1 <- sample[,c(roll,pitch,yaw,sensor,160)]
+validation1 <- validation[,c(roll,pitch,yaw,sensor,160)]
+```
+
+# Cross-validation 
+We want to do cross-validation to compare between algorithms (Classification)
+- CART (Classification and regression trees)
+- RF (Random Forest) 
+- BA (Bagged AdaBoost)
+Our goal is to have a accuracy rate for each class higher than 90%. After literature review, we decide to use k-folds cross-validation, here k = 5.
+```{r,cache=TRUE}
+set.seed(821)
+folds <- createFolds(y=sample1$classe,k=5,list=TRUE,returnTrain=TRUE)
+# First trial
+training <- sample1[unlist(folds[1]),]
+testing <- sample1[-unlist(folds[1]),]
+## RF
+modelFitRF1 <- train(classe~.,data=training,method="rf")
+predictionRF1 <- predict(modelFitRF1,newdata=testing)
+accRF1 <- sum(predictionRF1==testing$classe)/length(predictionRF1)
+## CART
+modelFitCART1 <- train(classe~.,data=training,method="rpart")
+predictionCART1 <- predict(modelFitCART1,newdata=testing)
+accCART1 <- sum(predictionCART1==testing$classe)/length(predictionCART1)
+## BA
+modelFitBA1 <- train(classe~.,data=training,method="AdaBag")
+predictionBA1 <- predict(modelFitBA1,newdata=testing)
+accBA1 <- sum(predictionBA1==testing$classe)/length(predictionBA1)
+
+# Second trial
+training <- sample1[unlist(folds[2]),]
+testing <- sample1[-unlist(folds[2]),]
+## RF
+modelFitRF2 <- train(classe~.,data=training,method="rf")
+predictionRF2 <- predict(modelFitRF2,newdata=testing)
+accRF2 <- sum(predictionRF2==testing$classe)/length(predictionRF2)
+## CART
+modelFitCART2 <- train(classe~.,data=training,method="rpart")
+predictionCART2 <- predict(modelFitCART2,newdata=testing)
+accCART2 <- sum(predictionCART2==testing$classe)/length(predictionCART2)
+## BCT
+modelFitBA2 <- train(classe~.,data=training,method="AdaBag")
+predictionBA2 <- predict(modelFitBA2,newdata=testing)
+accBA2 <- sum(predictionBA2==testing$classe)/length(predictionBA2)
+
+# Third trial
+training <- sample1[unlist(folds[3]),]
+testing <- sample1[-unlist(folds[3]),]
+## RF
+modelFitRF3 <- train(classe~.,data=training,method="rf")
+predictionRF3 <- predict(modelFitRF3,newdata=testing)
+accRF3 <- sum(predictionRF3==testing$classe)/length(predictionRF3)
+## CART
+modelFitCART3 <- train(classe~.,data=training,method="rpart")
+predictionCART3 <- predict(modelFitCART3,newdata=testing)
+accCART3 <- sum(predictionCART3==testing$classe)/length(predictionCART3)
+## BA
+modelFitBA3 <- train(classe~.,data=training,method="AdaBag")
+predictionBA3 <- predict(modelFitBA3,newdata=testing)
+accBA3 <- sum(predictionBA3==testing$classe)/length(predictionBA3)
+
+# Fourth trial
+training <- sample1[unlist(folds[4]),]
+testing <- sample1[-unlist(folds[4]),]
+## RF
+modelFitRF4 <- train(classe~.,data=training,method="rf")
+predictionRF4 <- predict(modelFitRF4,newdata=testing)
+accRF4 <- sum(predictionRF4==testing$classe)/length(predictionRF4)
+## CART
+modelFitCART4 <- train(classe~.,data=training,method="rpart")
+predictionCART4 <- predict(modelFitCART4,newdata=testing)
+accCART4 <- sum(predictionCART4==testing$classe)/length(predictionCART4)
+## BA
+modelFitBA4 <- train(classe~.,data=training,method="AdaBag")
+predictionBA4 <- predict(modelFitBA4,newdata=testing)
+accBA4 <- sum(predictionBA4==testing$classe)/length(predictionBA4)
+
+# Fifth trial
+training <- sample1[unlist(folds[5]),]
+testing <- sample1[-unlist(folds[5]),]
+## RF
+modelFitRF5 <- train(classe~.,data=training,method="rf")
+predictionRF5 <- predict(modelFitRF5,newdata=testing)
+accRF5 <- sum(predictionRF5==testing$classe)/length(predictionRF5)
+## CART
+modelFitCART5 <- train(classe~.,data=training,method="rpart")
+predictionCART5 <- predict(modelFitCART5,newdata=testing)
+accCART5 <- sum(predictionCART5==testing$classe)/length(predictionCART5)
+## BA
+modelFitBA5 <- train(classe~.,data=training,method="AdaBag")
+predictionBA5 <- predict(modelFitBA5,newdata=testing)
+accBA5 <- sum(predictionBA5==testing$classe)/length(predictionBA5)
+```
+compare the result, with random forest algorithm, we have accuracy as high as 100% and 99%. Accuracy with different algorithms after 5 trials shown as below:
+```{r,echo=FALSE}
+com <- matrix(c(accRF1,accRF2,accRF3,accRF4,accRF5,
+                accCART1,accCART2,accCART3,accCART4,accCART5,
+                accBA1,accBA2,accBA3,accBA4,accBA5),
+              nrow=5,ncol=3)
+com <- as.data.frame(com)
+names(com) <- c("RF","CART","BA")
+com
+```
+
+# Build Model and Predict
+We decide to use Random Forest Algorithm to build the model. Prediciton shown as below.
+```{r,cache=TRUE}
+modelFit <- train(classe~.,data=sample1,method="rf")
+prediction <- predict(modelFit,newdata=validation1)
+prediction <- as.character(prediction)
+answer <- cbind(prediction,validation1$problem_id)
+answer <- as.data.frame(answer)
+names(answer) <- c("prediction","problem_id")
+write.table(answer, "answer.txt", sep="\t")
+answer
+```
+
+
+# Reference
+Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
+Read more: http://groupware.les.inf.puc-rio.br/har#ixzz3dLVdXgar
